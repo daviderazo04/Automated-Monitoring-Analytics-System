@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus_omniwatch
+    ports:
+      - "9090:9090"
+    volumes:
+      # Esto es vital: conecta el YAML que genera tu Java con el cerebro de Prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-lifecycle' # Permite recargar la config en caliente sin apagar el contenedor
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_omniwatch
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus

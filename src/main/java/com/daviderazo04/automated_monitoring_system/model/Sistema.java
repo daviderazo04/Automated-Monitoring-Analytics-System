@@ -21,11 +21,11 @@ public class Sistema {
     @Column(nullable = false)
     private Integer puerto;
 
-    @Column(columnDefinition = "VARCHAR(100) DEFAULT '/actuator/prometheus'")
-    private String path;
+    @Column(length = 100)
+    private String path = "/actuator/prometheus";
 
-    @Column(columnDefinition = "VARCHAR(10) DEFAULT '30s'")
-    private String intervalo;
+    @Column(length = 10)
+    private String intervalo = "30s";
 
     private boolean monitoreado = true;
 
