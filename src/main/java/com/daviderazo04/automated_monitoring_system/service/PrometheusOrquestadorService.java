@@ -42,6 +42,12 @@ public class PrometheusOrquestadorService {
                 yamlBuilder.append("  - job_name: '").append(sistema.getAlias()).append("'\n");
                 yamlBuilder.append("    scrape_interval: ").append(sistema.getIntervalo()).append("\n");
                 yamlBuilder.append("    metrics_path: '").append(sistema.getPath()).append("'\n");
+
+                // Condición para soportar HTTPS en Google Cloud Run
+                if (sistema.getPuerto() == 443) {
+                    yamlBuilder.append("    scheme: https\n");
+                }
+
                 yamlBuilder.append("    static_configs:\n");
                 yamlBuilder.append("      - targets: ['").append(sistema.getHost()).append(":").append(sistema.getPuerto()).append("']\n\n");
             }
