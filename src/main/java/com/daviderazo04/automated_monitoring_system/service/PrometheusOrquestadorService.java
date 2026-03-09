@@ -1,11 +1,13 @@
 package com.daviderazo04.automated_monitoring_system.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import com.daviderazo04.automated_monitoring_system.model.Sistema;
 import com.daviderazo04.automated_monitoring_system.repository.SistemaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate; // Añadido para peticiones HTTP
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,9 +20,13 @@ public class PrometheusOrquestadorService {
 
     private final SistemaRepository sistemaRepository;
 
-    // Ruta donde se guardará el prometheus.yml (puedes configurarlo en application.properties)
-    @Value("${prometheus.config.path:./prometheus.yml}")
+    // Ruta donde se guardará el prometheus.yml
+    @Value("${prometheus.config.path}")
     private String prometheusConfigPath;
+
+    // URL dinámica para que funcione en la nube o en local
+    @Value("${prometheus.api.url}")
+    private String prometheusApiUrl;
 
     public void generarArchivoConfiguracion() {
         try {
@@ -57,11 +63,27 @@ public class PrometheusOrquestadorService {
             Files.writeString(path, yamlBuilder.toString());
             log.info("Archivo prometheus.yml generado exitosamente con {} targets.", sistemasActivos.size());
 
-            // TODO: Aquí luego añadiremos una llamada HTTP POST a http://localhost:9090/-/reload
-            // para que Prometheus lea el nuevo archivo sin reiniciarse.
+            // Ejecutamos la recarga en caliente
+            recargarPrometheusEnCaliente();
 
         } catch (Exception e) {
             log.error("Error al generar el archivo prometheus.yml", e);
+        }
+    }
+
+    // Método para avisarle a Prometheus que hay cambios sin apagarlo
+    private void recargarPrometheusEnCaliente() {
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String reloadEndpoint = prometheusApiUrl + "/-/reload";
+
+            // Dispara un POST vacío (que es lo que exige Prometheus)
+            restTemplate.postForEntity(reloadEndpoint, null, String.class);
+            log.info("✅ Prometheus recargado exitosamente en: {}", reloadEndpoint);
+
+        } catch (Exception e) {
+            // Usamos warn en vez de error para que no ensucie tanto el log si Prometheus está apagado en pruebas
+            log.warn("⚠️ No se pudo recargar Prometheus en {}. ¿Está encendido el contenedor? Error: {}", prometheusApiUrl, e.getMessage());
         }
     }
 }
