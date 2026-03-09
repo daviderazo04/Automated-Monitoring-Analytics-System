@@ -37,3 +37,5 @@
 1. Clonar el repositorio:
    ```bash
    git clone [https://github.com/daviderazo04/automated-monitoring-analyzer.git](https://github.com/daviderazo04/automated-monitoring-analyzer.git)
+2. Gradle sync para instalaciom de dependencias
+3. gradle task run
