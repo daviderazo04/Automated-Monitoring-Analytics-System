@@ -15,7 +15,6 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                // Esta línea asegura que CUALQUIER petición pase sin pedir login
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
         return http.build();
