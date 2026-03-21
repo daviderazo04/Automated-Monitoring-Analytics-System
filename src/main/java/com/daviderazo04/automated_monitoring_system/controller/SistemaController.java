@@ -27,13 +27,15 @@ public class SistemaController {
     @PostMapping
     public ResponseEntity<SistemaResponseDTO> registrarSistema(
             @Valid @RequestBody SistemaRequestDTO dto,
-            HttpServletRequest request) { // Usamos el request para obtener la IP real
+            HttpServletRequest request) {
 
-        // Temporal: Mockeamos el usuario hasta que tengamos JWT
-        String usuarioMock = "admin@empresa.com";
+        // Obtenemos el usuario autenticado desde el contexto de seguridad
+        String emailUsuario = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        
         String ipOrigen = request.getRemoteAddr();
 
-        SistemaResponseDTO response = sistemaService.registrarSistema(dto, usuarioMock, ipOrigen);
+        SistemaResponseDTO response = sistemaService.registrarSistema(dto, emailUsuario, ipOrigen);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

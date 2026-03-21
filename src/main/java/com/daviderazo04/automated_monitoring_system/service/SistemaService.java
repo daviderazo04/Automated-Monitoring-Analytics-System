@@ -20,6 +20,7 @@ public class SistemaService {
 
     private final SistemaRepository sistemaRepository;
     private final TipoAgenteRepository tipoAgenteRepository;
+    private final com.daviderazo04.automated_monitoring_system.repository.UsuarioRepository usuarioRepository;
     private final PrometheusOrquestadorService orquestadorService;
     private final LogService logService;
 
@@ -31,21 +32,24 @@ public class SistemaService {
 
     // MÉTODOS PÚBLICOS (El flujo principal se lee claramente)
     @Transactional
-    public SistemaResponseDTO registrarSistema(SistemaRequestDTO dto, String usuarioActual, String ip) {
-        Sistema sistemaGuardado = persistirNuevoSistema(dto);
+    public SistemaResponseDTO registrarSistema(SistemaRequestDTO dto, String emailUsuario, String ip) {
+        var usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                
+        Sistema sistemaGuardado = persistirNuevoSistema(dto, usuario);
         actualizarInfraestructuraPrometheus();
-        registrarAuditoriaDeCreacion(sistemaGuardado, usuarioActual, ip);
+        registrarAuditoriaDeCreacion(sistemaGuardado, emailUsuario, ip);
 
         return mapearAResponseDTO(sistemaGuardado);
     }
 
     // MÉTODOS ATÓMICOS PRIVADOS (Detalles de implementación)
-    private Sistema persistirNuevoSistema(SistemaRequestDTO dto) {
-        Sistema nuevoSistema = construirEntidadDesdeDTO(dto);
+    private Sistema persistirNuevoSistema(SistemaRequestDTO dto, com.daviderazo04.automated_monitoring_system.model.Usuario usuario) {
+        Sistema nuevoSistema = construirEntidadDesdeDTO(dto, usuario);
         return sistemaRepository.save(nuevoSistema);
     }
 
-    private Sistema construirEntidadDesdeDTO(SistemaRequestDTO dto) {
+    private Sistema construirEntidadDesdeDTO(SistemaRequestDTO dto, com.daviderazo04.automated_monitoring_system.model.Usuario usuario) {
         Sistema sistema = new Sistema();
         sistema.setAlias(dto.getAlias());
         sistema.setHost(dto.getHost());
@@ -54,12 +58,12 @@ public class SistemaService {
         sistema.setIntervalo(dto.getIntervalo() != null ? dto.getIntervalo() : "30s");
         sistema.setUltimaSincronizacion(LocalDateTime.now());
         sistema.setMonitoreado(true);
+        sistema.setUsuario(usuario);
 
         TipoAgente tipo = tipoAgenteRepository.findById(dto.getTipoAgenteId())
                 .orElseThrow(() -> new IllegalArgumentException("Tipo de Agente no válido"));
         sistema.setTipoAgente(tipo);
 
-        // TODO: Cuando implementemos JWT, aquí setearemos el usuario basado en el token
         return sistema;
     }
 
