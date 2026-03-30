@@ -29,9 +29,8 @@ public class SistemaController {
             @Valid @RequestBody SistemaRequestDTO dto,
             HttpServletRequest request) {
 
-        // Obtenemos el usuario autenticado desde el contexto de seguridad
-        String emailUsuario = org.springframework.security.core.context.SecurityContextHolder.getContext()
-                .getAuthentication().getName();
+        // Usar un usuario por defecto ya que la seguridad está desactivada
+        String emailUsuario = "admin@local.com";
         
         String ipOrigen = request.getRemoteAddr();
 

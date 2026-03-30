@@ -33,8 +33,7 @@ public class SistemaService {
     // MÉTODOS PÚBLICOS (El flujo principal se lee claramente)
     @Transactional
     public SistemaResponseDTO registrarSistema(SistemaRequestDTO dto, String emailUsuario, String ip) {
-        var usuario = usuarioRepository.findByEmail(emailUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        var usuario = usuarioRepository.findByEmail(emailUsuario).orElse(null);
                 
         Sistema sistemaGuardado = persistirNuevoSistema(dto, usuario);
         actualizarInfraestructuraPrometheus();
@@ -61,7 +60,12 @@ public class SistemaService {
         sistema.setUsuario(usuario);
 
         TipoAgente tipo = tipoAgenteRepository.findById(dto.getTipoAgenteId())
-                .orElseThrow(() -> new IllegalArgumentException("Tipo de Agente no válido"));
+                .orElseGet(() -> {
+                    TipoAgente nuevoTipo = new TipoAgente();
+                    nuevoTipo.setId(dto.getTipoAgenteId());
+                    nuevoTipo.setNombre("Agente Default");
+                    return tipoAgenteRepository.save(nuevoTipo);
+                });
         sistema.setTipoAgente(tipo);
 
         return sistema;

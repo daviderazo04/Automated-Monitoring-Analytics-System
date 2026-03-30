@@ -39,9 +39,10 @@ public class PrometheusOrquestadorService {
             yamlBuilder.append("scrape_configs:\n");
 
             // Job por defecto (El propio orquestador)
-            yamlBuilder.append("  - job_name: 'omniwatch_manager'\n");
+            yamlBuilder.append("  - job_name: 'automated_monitoring_manager'\n");
+            yamlBuilder.append("    metrics_path: '/actuator/prometheus'\n");
             yamlBuilder.append("    static_configs:\n");
-            yamlBuilder.append("      - targets: ['localhost:8080']\n\n");
+            yamlBuilder.append("      - targets: ['host.docker.internal:8080']\n\n");
 
             // Jobs dinámicos desde la Base de Datos
             for (Sistema sistema : sistemasActivos) {
