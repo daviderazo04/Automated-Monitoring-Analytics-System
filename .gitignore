@@ -1,5 +1,6 @@
 src/main/resources/application.properties
 prometheus.yml
+postgres_data/
 
 HELP.md
 .gradle

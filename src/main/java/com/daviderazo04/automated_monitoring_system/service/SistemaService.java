@@ -60,12 +60,7 @@ public class SistemaService {
         sistema.setUsuario(usuario);
 
         TipoAgente tipo = tipoAgenteRepository.findById(dto.getTipoAgenteId())
-                .orElseGet(() -> {
-                    TipoAgente nuevoTipo = new TipoAgente();
-                    nuevoTipo.setId(dto.getTipoAgenteId());
-                    nuevoTipo.setNombre("Agente Default");
-                    return tipoAgenteRepository.save(nuevoTipo);
-                });
+                .orElseThrow(() -> new IllegalArgumentException("Tipo de Agente con ID " + dto.getTipoAgenteId() + " no encontrado"));
         sistema.setTipoAgente(tipo);
 
         return sistema;
