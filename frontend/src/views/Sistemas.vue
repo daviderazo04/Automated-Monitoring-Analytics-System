@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-2xl font-bold text-white tracking-wide">Gestión de Sistemas</h2>
-        <p class="text-sm text-[#94a3b8] mt-1">Registra y administra los microservicios y aplicaciones a monitorear.</p>
+        <p class="text-sm text-[#94a3b8] mt-1">Registra y administra los microservicios y bases de datos a monitorear.</p>
       </div>
     </div>
 
@@ -21,11 +21,16 @@
                 {{ sistema.monitoreado ? 'Activo' : 'Inactivo' }}
               </span>
             </div>
-            <div class="text-xs text-[#94a3b8] truncate font-mono">
-              {{ sistema.host }}:{{ sistema.puerto }}{{ sistema.path }}
+            <div class="text-xs text-[#94a3b8] truncate font-mono mb-1">
+               {{ sistema.host }}:{{ sistema.puerto }}{{ sistema.tipoAgenteNombre !== 'dbpostgres' ? sistema.path : '' }}
             </div>
-            <div class="text-xs text-[#64748b] mt-1 flex items-center gap-1">
-              <Clock class="w-3 h-3"/> Scrape: {{ sistema.intervalo }}
+            <div class="flex items-center justify-between mt-2">
+              <span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 font-mono border border-slate-700">
+                {{ sistema.tipoAgenteNombre }}
+              </span>
+              <div class="text-[10px] text-[#64748b] flex items-center gap-1">
+                <Clock class="w-3 h-3"/> Scrape: {{ sistema.intervalo }}
+              </div>
             </div>
           </li>
           <li v-if="sistemas.length === 0" class="p-4 rounded-xl border border-dashed border-[#334155] text-sm text-[#64748b] text-center">
@@ -47,6 +52,17 @@
           <div class="p-6">
             <form @submit.prevent="crearSistema" class="space-y-6">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+                <!-- Tipo de Agente -->
+                <div class="space-y-1 sm:col-span-2">
+                  <label class="text-xs font-semibold uppercase tracking-wider text-[#94a3b8]">Tipo de Sistema / Agente</label>
+                  <select v-model.number="form.tipoAgenteId" required class="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-medium">
+                    <option v-for="tipo in tiposAgente" :key="tipo.id" :value="tipo.id">
+                      {{ tipo.nombre }} - {{ tipo.descripcion }}
+                    </option>
+                  </select>
+                </div>
+
                 <!-- Alias -->
                 <div class="space-y-1">
                   <label class="text-xs font-semibold uppercase tracking-wider text-[#94a3b8]">Alias (Job Name)</label>
@@ -65,8 +81,8 @@
                   <input v-model.number="form.puerto" required type="number" class="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-4 py-2.5 text-white placeholder-[#475569] focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-mono text-sm" />
                 </div>
 
-                <!-- Path -->
-                <div class="space-y-1">
+                <!-- Path (Only for Spring Boot) -->
+                <div class="space-y-1" v-if="selectedTipoAgenteNombre !== 'dbpostgres'">
                   <label class="text-xs font-semibold uppercase tracking-wider text-[#94a3b8]">Metrics Path</label>
                   <input v-model="form.path" required type="text" class="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-4 py-2.5 text-white placeholder-[#475569] focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-mono text-sm" />
                 </div>
@@ -76,12 +92,22 @@
                   <label class="text-xs font-semibold uppercase tracking-wider text-[#94a3b8]">Intervalo Scrape</label>
                   <input v-model="form.intervalo" required type="text" placeholder="15s" class="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-4 py-2.5 text-white placeholder-[#475569] focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-mono text-sm" />
                 </div>
-                
-                <!-- ID Agente -->
-                <div class="space-y-1">
-                  <label class="text-xs font-semibold uppercase tracking-wider text-[#94a3b8]">ID Tipo Agente</label>
-                  <input v-model.number="form.tipoAgenteId" required type="number" class="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-4 py-2.5 text-white placeholder-[#475569] focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-mono text-sm" />
-                </div>
+
+                <!-- DB Specific Fields -->
+                <template v-if="selectedTipoAgenteNombre === 'dbpostgres'">
+                  <div class="space-y-1">
+                    <label class="text-xs font-semibold uppercase tracking-wider text-[#94a3b8]">Nombre Base de Datos</label>
+                    <input v-model="form.dbName" required type="text" placeholder="monitoreo_db" class="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-4 py-2.5 text-white placeholder-[#475569] focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-mono text-sm" />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-xs font-semibold uppercase tracking-wider text-[#94a3b8]">Usuario DB</label>
+                    <input v-model="form.dbUser" required type="text" placeholder="postgres" class="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-4 py-2.5 text-white placeholder-[#475569] focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-mono text-sm" />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-xs font-semibold uppercase tracking-wider text-[#94a3b8]">Contraseña DB</label>
+                    <input v-model="form.dbPassword" required type="password" placeholder="••••••••" class="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-4 py-2.5 text-white placeholder-[#475569] focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-mono text-sm" />
+                  </div>
+                </template>
               </div>
               
               <div class="pt-4 flex items-center justify-between border-t border-[#334155]/60 mt-6">
@@ -103,11 +129,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { PlusCircle, Save, CheckCircle, AlertCircle, Clock } from 'lucide-vue-next'
 
 const sistemas = ref<any[]>([])
+const tiposAgente = ref<any[]>([])
 
 const form = ref({
   alias: '',
@@ -115,7 +142,15 @@ const form = ref({
   puerto: 8080,
   path: '/actuator/prometheus',
   intervalo: '15s',
-  tipoAgenteId: 1
+  tipoAgenteId: 1,
+  dbName: '',
+  dbUser: '',
+  dbPassword: ''
+})
+
+const selectedTipoAgenteNombre = computed(() => {
+  const tipo = tiposAgente.value.find(t => t.id === form.value.tipoAgenteId)
+  return tipo ? tipo.nombre : ''
 })
 
 const successMsg = ref('')
@@ -130,13 +165,38 @@ const cargarSistemas = async () => {
   }
 }
 
+const cargarTiposAgente = async () => {
+  try {
+    const res = await axios.get('/api/tipo-agente')
+    tiposAgente.value = res.data
+    if (tiposAgente.value.length > 0) {
+      form.value.tipoAgenteId = tiposAgente.value[0].id
+    }
+  } catch (err: any) {
+    console.error('Error cargando tipos agente', err)
+  }
+}
+
 const crearSistema = async () => {
   successMsg.value = ''
   errorMsg.value = ''
   try {
-    await axios.post('/api/sistemas', form.value)
+    
+    // Si no es postgres, limpiar campos de DB por seguridad
+    const payload = { ...form.value }
+    if (selectedTipoAgenteNombre.value !== 'dbpostgres') {
+      payload.dbName = null as any
+      payload.dbUser = null as any
+      payload.dbPassword = null as any
+    } else {
+      payload.path = '/api/metrics/postgres/' // Backend override handled anyway, but good for DTO mapping
+    }
+
+    await axios.post('/api/sistemas', payload)
     successMsg.value = 'Sistema registrado correctamente.'
     form.value.alias = ''
+    form.value.dbName = ''
+    form.value.dbPassword = ''
     cargarSistemas()
     setTimeout(() => { successMsg.value = '' }, 3000)
   } catch (err: any) {
@@ -146,6 +206,7 @@ const crearSistema = async () => {
 }
 
 onMounted(() => {
+  cargarTiposAgente()
   cargarSistemas()
 })
 </script>

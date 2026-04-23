@@ -27,6 +27,10 @@ public class SistemaRequestDTO {
     @NotNull(message = "El ID del tipo de agente es obligatorio")
     private Integer tipoAgenteId;
 
+    private String dbName;
+    private String dbUser;
+    private String dbPassword;
+
     // Temporalmente lo pedimos por request. Más adelante, con JWT,
     // este ID se extraerá directamente del token de sesión del usuario logueado.
     private Long usuarioId;

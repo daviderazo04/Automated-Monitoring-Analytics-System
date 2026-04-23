@@ -23,6 +23,7 @@ public class SistemaService {
     private final com.daviderazo04.automated_monitoring_system.repository.UsuarioRepository usuarioRepository;
     private final PrometheusOrquestadorService orquestadorService;
     private final LogService logService;
+    private final PostgresMonitoringService postgresMonitoringService;
 
     public List<SistemaResponseDTO> obtenerTodos() {
         return sistemaRepository.findAll().stream()
@@ -36,6 +37,12 @@ public class SistemaService {
         var usuario = usuarioRepository.findByEmail(emailUsuario).orElse(null);
                 
         Sistema sistemaGuardado = persistirNuevoSistema(dto, usuario);
+        
+        // Si el sistema es de tipo postgres, registrar sus métricas dinámicamente
+        if ("dbpostgres".equals(sistemaGuardado.getTipoAgente().getNombre())) {
+            postgresMonitoringService.registrarMetricasPostgres(sistemaGuardado);
+        }
+
         actualizarInfraestructuraPrometheus();
         registrarAuditoriaDeCreacion(sistemaGuardado, emailUsuario, ip);
 
@@ -63,6 +70,10 @@ public class SistemaService {
                 .orElseThrow(() -> new IllegalArgumentException("Tipo de Agente con ID " + dto.getTipoAgenteId() + " no encontrado"));
         sistema.setTipoAgente(tipo);
 
+        sistema.setDbName(dto.getDbName());
+        sistema.setDbUser(dto.getDbUser());
+        sistema.setDbPassword(dto.getDbPassword());
+
         return sistema;
     }
 
@@ -89,6 +100,9 @@ public class SistemaService {
         dto.setMonitoreado(sistema.isMonitoreado());
         dto.setUltimaSincronizacion(sistema.getUltimaSincronizacion());
         dto.setTipoAgenteNombre(sistema.getTipoAgente().getNombre());
+        dto.setDbName(sistema.getDbName());
+        dto.setDbUser(sistema.getDbUser());
+        dto.setDbPassword(sistema.getDbPassword());
         return dto;
     }
 }

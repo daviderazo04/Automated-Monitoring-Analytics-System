@@ -14,4 +14,7 @@ public class SistemaResponseDTO {
     private boolean monitoreado;
     private LocalDateTime ultimaSincronizacion;
     private String tipoAgenteNombre;
+    private String dbName;
+    private String dbUser;
+    private String dbPassword;
 }

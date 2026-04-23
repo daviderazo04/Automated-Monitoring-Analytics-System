@@ -32,6 +32,15 @@ public class Sistema {
     @Column(name = "ultima_sincronizacion")
     private LocalDateTime ultimaSincronizacion;
 
+    @Column(name = "db_name")
+    private String dbName;
+
+    @Column(name = "db_user")
+    private String dbUser;
+
+    @Column(name = "db_password")
+    private String dbPassword;
+
     @ManyToOne
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
